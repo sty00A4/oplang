@@ -90,7 +90,7 @@ local function lex(path, text)
         end
     end
     local function symbol(s)
-        return s == "(" or s == ")" or s == "[" or s == "]" or s == "{" or s == "}" or s == "\""
+        return s == "(" or s == ")" or s == "[" or s == "]" or s == "{" or s == "}" or s == "\"" or s == "@"
     end
     ---@return Token|nil
     local function next()

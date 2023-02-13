@@ -8,7 +8,7 @@ if args[1] then
     local text = file:readAll()
     file:close()
     local tokens = lang.lexer.lex(path, text)
-    for _, token in ipairs(tokens) do io.write(tostring(token).." ") end print()
+    -- for _, token in ipairs(tokens) do io.write(tostring(token).." ") end print()
     local node, err, epos = lang.parser.parse(tokens) if err and not node then
         print("ERROR: "..err)
     end

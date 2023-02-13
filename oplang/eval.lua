@@ -8,7 +8,9 @@ local function Context()
             ---@return any
             get = function(self, id)
                 for _, scope in ipairs(self.scopes) do
-                    return scope[id]
+                    if type(scope[id]) ~= "nil" then
+                        return scope[id]
+                    end
                 end
             end,
             ---@param self Context
@@ -81,6 +83,25 @@ local function STDContext()
         else
             return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
         end
+    end)
+    context:set("table", function(_, args, _)
+        local idx = 1
+        local t = {}
+        while idx <= #args do
+            local key = args[idx]
+            idx = idx + 1
+            local value = args[idx]
+            idx = idx + 1
+            t[key] = value
+        end
+        return t, "return"
+    end)
+    context:set("array", function(_, args, _)
+        local array = {}
+        for _, arg in pairs(args) do
+            table.insert(array, arg)
+        end
+        return array, "return"
     end)
     return context
 end
@@ -158,7 +179,14 @@ NodeEval = {
         if type(value) == "function" then
             return value(node, args, context)
         end
-        return nil, nil, "expected function for the head, got "..type(value), head.pos
+        if type(value) == "table" then
+            if args[1] then
+                return value[args[1]], "return"
+            else
+                return value, "return"
+            end
+        end
+        return nil, nil, "expected function|table for the head, got "..type(value), head.pos
     end
 }
 
