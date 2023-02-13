@@ -38,73 +38,6 @@ local function Context()
         }
     )
 end
----@return Context
-local function STDContext()
-    local context = Context()
-    local fieldJoin = "-"
-    ---@param func function
-    ---@return function
-    local function linkf(func)
-        return function (node, args, _)
-            local res = { pcall(func, table.unpack(args)) }
-            if res[1] then
-
-                table.remove(res, 1)
-                if #res == 1 then
-                    return res[1]
-                end
-                return res
-            end
-            return nil, nil, "from Lua: "..tostring(res[2]), node.pos
-        end
-    end
-    ---@param value any
-    ---@param prefix string|nil
-    local function link(value, prefix)
-        if type(value) == "table" then
-            for k, v in pairs(value) do
-                if k ~= "_ENV" and k ~= "_G" then
-                    link(v, prefix and prefix..fieldJoin..k or k)
-                end
-            end
-            return
-        end
-        if not prefix then prefix = "?" end
-        if type(value) == "function" then
-            context:set(prefix, linkf(value))
-        else
-            context:set(prefix, value)
-        end
-    end
-    link(_G)
-    context:set("set", function(node, args, context)
-        if type(args[1]) == "string" then
-            context:set(args[1], args[2])
-        else
-            return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
-        end
-    end)
-    context:set("table", function(_, args, _)
-        local idx = 1
-        local t = {}
-        while idx <= #args do
-            local key = args[idx]
-            idx = idx + 1
-            local value = args[idx]
-            idx = idx + 1
-            t[key] = value
-        end
-        return t, "return"
-    end)
-    context:set("array", function(_, args, _)
-        local array = {}
-        for _, arg in pairs(args) do
-            table.insert(array, arg)
-        end
-        return array, "return"
-    end)
-    return context
-end
 
 ---@alias Return "return"|"break"|nil
 
@@ -189,6 +122,76 @@ NodeEval = {
         return nil, nil, "expected function|table for the head, got "..type(value), head.pos
     end
 }
+
+---@return Context
+local function STDContext()
+    local context = Context()
+    local fieldJoin = "-"
+    ---@param func function
+    ---@return function
+    local function linkf(func)
+        return function (node, args, _)
+            local res = { pcall(func, table.unpack(args)) }
+            if res[1] then
+
+                table.remove(res, 1)
+                if #res == 1 then
+                    return res[1]
+                end
+                return res
+            end
+            return nil, nil, "from Lua: "..tostring(res[2]), node.pos
+        end
+    end
+    ---@param value any
+    ---@param prefix string|nil
+    local function link(value, prefix)
+        if type(value) == "table" then
+            for k, v in pairs(value) do
+                if k ~= "_ENV" and k ~= "_G" then
+                    link(v, prefix and prefix..fieldJoin..k or k)
+                end
+            end
+            return
+        end
+        if not prefix then prefix = "?" end
+        if type(value) == "function" then
+            context:set(prefix, linkf(value))
+        else
+            context:set(prefix, value)
+        end
+    end
+    link(_G)
+
+    context:set("set", function(node, args, context)
+        if type(args[1]) == "string" then
+            context:set(args[1], args[2])
+        else
+            return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
+        end
+    end)
+
+    context:set("table", function(_, args, _)
+        local idx = 1
+        local t = {}
+        while idx <= #args do
+            local key = args[idx]
+            idx = idx + 1
+            local value = args[idx]
+            idx = idx + 1
+            t[key] = value
+        end
+        return t, "return"
+    end)
+    context:set("array", function(_, args, _)
+        local array = {}
+        for _, arg in pairs(args) do
+            table.insert(array, arg)
+        end
+        return array, "return"
+    end)
+    return context
+end
 
 return {
     eval = eval,

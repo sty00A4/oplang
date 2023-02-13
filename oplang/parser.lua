@@ -57,10 +57,6 @@ local function Node(node, attr, pos)
         },
         {
             __name = "node",
-            ---@param self Node
-            __tostring = function(self)
-                return textutils.serialise({ node = self.node, attr = self.attr })
-            end
         }
     )
 end

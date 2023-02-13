@@ -5,6 +5,10 @@ if args[1] then
     ---@type string
     local path = args[1]
     local file = fs.open(path, "r")
+    if not file then
+        print(("couldn't open path %q"):format(path))
+        return
+    end
     local text = file:readAll()
     file:close()
     local tokens = lang.lexer.lex(path, text)
