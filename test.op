@@ -1,2 +1,2 @@
-(set @name "sty")
-(print name)
+(set @list (table @name "sty" @age 18))
+(print (list @age))
