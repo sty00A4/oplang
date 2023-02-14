@@ -510,6 +510,25 @@ local function STDContext()
             return value
         end, "return"
     end)
+    context:create("func-inline", function(node, args, context)
+        local idx = 1
+        local params = {}
+        while type(args[idx]) == "string" do
+            table.insert(params, args[idx])
+            idx = idx + 1
+        end
+        if not isNode(args[idx]) then
+            return nil, nil, "bad last argument (expected node table, got "..type(args[idx])..")", node.pos
+        end
+        local funcNode = args[idx]
+        return function(_, args, context)
+            for i, param in ipairs(params) do
+                context:create(param, args[i])
+            end
+            local value, _, err, epos = eval(funcNode, context) if err then return nil, nil, err, epos end
+            return value
+        end, "return"
+    end)
 
     context:create("table", function(_, args, _)
         local idx = 1
