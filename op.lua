@@ -1,7 +1,6 @@
 local lang = require "oplang"
 local args = {...}
 if args[1] then
-    term.clear() term.setCursorPos(1, 1)
     ---@type string
     local path = args[1]
     local file = io.open(path, "r")

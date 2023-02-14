@@ -1,2 +1,10 @@
-(set @a 0)
-(while #(< a 10) #{(print a)(set @a (+ a 1))})
+(term-clear)
+(term-setCursorPos 1 1)
+
+(term-setBackgroundColor colors-red)
+(term-setTextColor colors-black)
+
+(print "DANGER\n")
+
+(term-setBackgroundColor colors-black)
+(term-setTextColor colors-white)

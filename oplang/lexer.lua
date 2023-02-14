@@ -142,8 +142,22 @@ local function lex(path, text)
             advance()
             local str = ""
             while char() ~= "\"" and #char() > 0 do
-                str = str..char()
-                advance()
+                if char() == "\\" then
+                    advance()
+                    if char() == "n" then
+                        str = str.."\n"
+                    elseif char() == "t" then
+                        str = str.."\t"
+                    elseif char() == "r" then
+                        str = str.."\r"
+                    else
+                        str = str..char()
+                    end
+                    advance()
+                else
+                    str = str..char()
+                    advance()
+                end
             end
             pos:extend(Position(file, ln, ln, col, col))
             advance()
