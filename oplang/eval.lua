@@ -566,6 +566,98 @@ local function STDContext()
         end
         context:pop()
     end)
+    context:create("for", function(node, args, context)
+        local key, value, iterator, closure = table.unpack(args)
+        if type(key) ~= "string" then
+            return nil, nil, "bad argument #1 (expected string, got "..type(key)..")", node.pos
+        end
+        if type(value) ~= "string" then
+            return nil, nil, "bad argument #2 (expected string, got "..type(value)..")", node.pos
+        end
+        if type(iterator) ~= "table" then
+            return nil, nil, "bad argument #3 (expected table, got "..type(iterator)..")", node.pos
+        end
+        if not isNode(closure) then
+            return nil, nil, "bad argument #4 (expected node table, got "..type(closure)..")", node.pos
+        end
+        context:push()
+        for k, v in pairs(iterator) do
+            context:set(key, k)
+            context:set(value, v)
+            local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
+            if ret == "return" then
+                context:pop()
+                return value, ret
+            end
+            if ret == "break" then
+                break
+            end
+        end
+        context:pop()
+    end)
+    context:create("fori", function(node, args, context)
+        local key, value, iterator, closure = table.unpack(args)
+        if type(key) ~= "string" then
+            return nil, nil, "bad argument #1 (expected string, got "..type(key)..")", node.pos
+        end
+        if type(value) ~= "string" then
+            return nil, nil, "bad argument #2 (expected string, got "..type(value)..")", node.pos
+        end
+        if type(iterator) ~= "table" then
+            return nil, nil, "bad argument #3 (expected table, got "..type(iterator)..")", node.pos
+        end
+        if not isNode(closure) then
+            return nil, nil, "bad argument #4 (expected node table, got "..type(closure)..")", node.pos
+        end
+        context:push()
+        for k, v in ipairs(iterator) do
+            context:set(key, k)
+            context:set(value, v)
+            local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
+            if ret == "return" then
+                context:pop()
+                return value, ret
+            end
+            if ret == "break" then
+                break
+            end
+        end
+        context:pop()
+    end)
+    context:create("forn", function(node, args, context)
+        local id, start, stop = table.unpack(args)
+        if type(id) ~= "string" then
+            return nil, nil, "bad argument #1 (expected string, got "..type(key)..")", node.pos
+        end
+        if type(start) ~= "number" then
+            return nil, nil, "bad argument #2 (expected number, got "..type(value)..")", node.pos
+        end
+        if type(stop) ~= "number" then
+            return nil, nil, "bad argument #3 (expected number, got "..type(value)..")", node.pos
+        end
+        local step = 1
+        local closure = args[4]
+        if type(closure) == "number" then
+            step = closure
+            closure = args[5]
+        end
+        if not isNode(closure) then
+            return nil, nil, "bad argument #4 (expected node table, got "..type(closure)..")", node.pos
+        end
+        context:push()
+        for i = start, stop, step do
+            context:set(id, i)
+            local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
+            if ret == "return" then
+                context:pop()
+                return value, ret
+            end
+            if ret == "break" then
+                break
+            end
+        end
+        context:pop()
+    end)
     
     context:create("string", function(_, args, _)
         return tostring(args[1]), "return"
