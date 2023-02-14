@@ -722,7 +722,7 @@ local function STDContext()
         return type(args[1])
     end)
 
-    local stdPath ="oplang/std.op"
+    local stdPath = "oplang/std.op"
     local file = io.open(stdPath, "r")
     if file then
         local text = file:read("a")

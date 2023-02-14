@@ -211,6 +211,9 @@ local function lex(path, text)
         if id == "true" or id == "false" then
             return Token("boolean", id == "true", pos)
         end
+        if id == "nil" then
+            return Token("nil", nil, pos)
+        end
         return Token("id", id, pos)
     end
     while #char() > 0 do

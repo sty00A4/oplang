@@ -119,7 +119,8 @@ local function parse(tokens)
             pos:extend(node.pos)
             return Node("closure", node, pos), nil
         end
-        if token.token == "id" or token.token == "number" or token.token == "string" or token.token == "key" or token.token == "boolean" then
+        if token.token == "id" or token.token == "number" or token.token == "string"
+        or token.token == "key" or token.token == "boolean" or token.token == "nil" then
             advance()
             return Node(token.token, token.value, token.pos), nil
         end
