@@ -32,12 +32,28 @@ NodeRepr = {
         return ("%q"):format(node.attr)
     end,
     ---@param node Node
+    key = function (node)
+        return "@"..node.attr
+    end,
+    ---@param node Node
+    boolean = function (node)
+        return tostring(node.attr)
+    end,
+    ---@param node Node
+    ["nil"] = function (node)
+        return "nil"
+    end,
+    ---@param node Node
     call = function (node)
         local s = "( "..reprNode(node.attr.head).." "
         for _, arg in ipairs(node.attr.args) do
             s = s .. reprNode(arg) .. " "
         end
         return s..")"
+    end,
+    ---@param node Node
+    closure = function (node)
+        return "#"..reprNode(node.attr)
     end,
 }
 
