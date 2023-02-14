@@ -99,10 +99,18 @@ local function parse(tokens)
             local pos = token.pos:copy()
             advance()
             local head, err, epos = next() if err and not head then return nil, err, epos end
-            local args = body("callOut")
+            local args, err, epos = body("callOut") if err and not args then return nil, err, epos end
             pos:extend(get().pos)
             advance()
             return Node("call", { head = head, args = args }, pos), nil
+        end
+        if token.token == "bodyIn" then
+            local pos = token.pos:copy()
+            advance()
+            local nodes, err, epos = body("bodyOut") if err and not nodes then return nil, err, epos end
+            pos:extend(get().pos)
+            advance()
+            return Node("body", nodes, pos), nil
         end
         if token.token == "closure" then
             local pos = token.pos:copy()

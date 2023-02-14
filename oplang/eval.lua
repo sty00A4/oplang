@@ -165,6 +165,17 @@ NodeEval = {
         end
         context:pop()
     end,
+    body = function(node, context)
+        context:push()
+        for _, n in ipairs(node.attr) do
+            local value, ret, err, epos = eval(n, context) if err then return nil, nil, err, epos end
+            if ret then
+                context:pop()
+                return value, ret
+            end
+        end
+        context:pop()
+    end,
     ---@param node Node
     ---@param context Context
     ---@return any, Return, string|nil, Position|nil
@@ -655,6 +666,29 @@ local function STDContext()
             if ret == "break" then
                 break
             end
+        end
+        context:pop()
+    end)
+    context:create("while", function(node, args, context)
+        local condn, closure = table.unpack(args)
+        if not isNode(condn) then
+            return nil, nil, "bad argument #1 (expected node table, got "..type(condn)..")", node.pos
+        end
+        if not isNode(closure) then
+            return nil, nil, "bad argument #2 (expected node table, got "..type(closure)..")", node.pos
+        end
+        context:push()
+        local cond, _, err, epos = eval(condn, context) if err then return nil, nil, err, epos end
+        while cond do
+            local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
+            if ret == "return" then
+                context:pop()
+                return value, ret
+            end
+            if ret == "break" then
+                break
+            end
+            cond, _, err, epos = eval(condn, context) if err then return nil, nil, err, epos end
         end
         context:pop()
     end)

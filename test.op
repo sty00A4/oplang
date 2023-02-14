@@ -1,2 +1,2 @@
-(for @i @v (table @a 3 @b 2 @c 1)
-    #(print i v))
+(set @a 0)
+(while #(< a 10) #{(print a)(set @a (+ a 1))})
