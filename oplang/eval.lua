@@ -151,7 +151,10 @@ NodeEval = {
         if type(value) == "boolean" then
             return value and args[1] or args[2]
         end
-        return nil, nil, "expected function|table for the head, got "..type(value), head.pos
+        if type(value) == "number" then
+            return args[value]
+        end
+        return nil, nil, "unsupported type for head ("..type(value)..")", head.pos
     end
 }
 
