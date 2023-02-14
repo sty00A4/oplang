@@ -1,2 +1,4 @@
-(def @if @cond @case @else #(do (cond case else)))
-(if false #(print 1) #(print 0))
+(create @if (func @cond @case @else
+    #(do (cond case else))))
+(if true
+    #(print 1))
