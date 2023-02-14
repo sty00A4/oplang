@@ -12,7 +12,7 @@ local function reprNode(node)
 end
 NodeRepr = {
     ---@param node Node
-    chunk = function (node)
+    chunk = function(node)
         local s = ""
         for _, n in ipairs(node.attr) do
             s = s .. reprNode(n) .. "\n"
