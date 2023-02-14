@@ -259,6 +259,109 @@ local function STDContext()
         end
     end
     link(_G)
+    local add = linkf(function(a, b)
+        return a + b
+    end)
+    local sub = linkf(function(a, b)
+        return a - b
+    end)
+    local neg = linkf(function(a)
+        return -a
+    end)
+    local mul = linkf(function(a, b)
+        return a * b
+    end)
+    local div = linkf(function(a, b)
+        return a / b
+    end)
+    local mod = linkf(function(a, b)
+        return a % b
+    end)
+    local pow = linkf(function(a, b)
+        return a ^ b
+    end)
+    context:create("+", function (node, args, context)
+        local sum
+        for _, arg in pairs(args) do
+            local err, epos
+            if sum then
+                sum, _, err, epos = add(node, { sum, arg }, context) if err then return nil, nil, err, epos end
+            else
+                sum = arg
+            end
+        end
+        return sum, "return"
+    end)
+    context:create("-", function (node, args, context)
+        if #args == 1 then
+            local n, _, err, epos = neg(node, args, context) if err then return nil, nil, err, epos end
+            return n, "return"
+        end
+        local sum
+        for _, arg in pairs(args) do
+            local err, epos
+            if sum then
+                sum, _, err, epos = sub(node, { sum, arg }, context) if err then return nil, nil, err, epos end
+            else
+                sum = arg
+            end
+        end
+        return sum, "return"
+    end)
+    context:create("*", function (node, args, context)
+        local sum
+        for _, arg in pairs(args) do
+            local err, epos
+            if sum then
+                sum, _, err, epos = mul(node, { sum, arg }, context) if err then return nil, nil, err, epos end
+            else
+                sum = arg
+            end
+        end
+        return sum, "return"
+    end)
+    context:create("/", function (node, args, context)
+        local sum
+        for _, arg in pairs(args) do
+            local err, epos
+            if sum then
+                sum, _, err, epos = div(node, { sum, arg }, context) if err then return nil, nil, err, epos end
+            else
+                sum = arg
+            end
+        end
+        return sum, "return"
+    end)
+    context:create("%", function (node, args, context)
+        if #args == 1 then
+            return 
+        end
+        local sum
+        for _, arg in pairs(args) do
+            local err, epos
+            if sum then
+                sum, _, err, epos = mod(node, { sum, arg }, context) if err then return nil, nil, err, epos end
+            else
+                sum = arg
+            end
+        end
+        return sum, "return"
+    end)
+    context:create("^", function (node, args, context)
+        if #args == 1 then
+            return 
+        end
+        local sum
+        for _, arg in pairs(args) do
+            local err, epos
+            if sum then
+                sum, _, err, epos = pow(node, { sum, arg }, context) if err then return nil, nil, err, epos end
+            else
+                sum = arg
+            end
+        end
+        return sum, "return"
+    end)
 
     context:create("set", function(node, args, context)
         if type(args[1]) == "string" then

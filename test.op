@@ -1,2 +1,1 @@
-(if true
-    #(print OP_VERSION))
+(print (+ 1 2 (- 3)))
