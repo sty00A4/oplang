@@ -4,12 +4,12 @@ if args[1] then
     term.clear() term.setCursorPos(1, 1)
     ---@type string
     local path = args[1]
-    local file = fs.open(path, "r")
+    local file = io.open(path, "r")
     if not file then
         print(("couldn't open path %q"):format(path))
         return
     end
-    local text = file:readAll()
+    local text = file:read("a")
     file:close()
     local tokens = lang.lexer.lex(path, text)
     -- for _, token in ipairs(tokens) do io.write(tostring(token).." ") end print()

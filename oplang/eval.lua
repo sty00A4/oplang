@@ -1,3 +1,6 @@
+local lexer = require "oplang.lexer"
+local parser = require "oplang.parser"
+
 local function Context()
     return setmetatable(
         ---@class Context
@@ -33,6 +36,14 @@ local function Context()
             create = function(self, id, value)
                 if #self.scopes > 0 then
                     self.scopes[#self.scopes][id] = value
+                end
+            end,
+            ---@param self Context
+            ---@param id string
+            ---@param value any
+            global = function(self, id, value)
+                if #self.scopes > 0 then
+                    self.scopes[1][id] = value
                 end
             end,
             ---@param self Context
@@ -257,6 +268,13 @@ local function STDContext()
             return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
         end
     end)
+    context:create("global", function(node, args, context)
+        if type(args[1]) == "string" then
+            context:global(args[1], args[2])
+        else
+            return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
+        end
+    end)
     context:create("func", function(node, args, context)
         local idx = 1
         local params = {}
@@ -277,7 +295,7 @@ local function STDContext()
         end, "return"
     end)
 
-    context:set("table", function(_, args, _)
+    context:create("table", function(_, args, _)
         local idx = 1
         local t = {}
         while idx <= #args do
@@ -289,7 +307,7 @@ local function STDContext()
         end
         return t, "return"
     end)
-    context:set("array", function(_, args, _)
+    context:create("array", function(_, args, _)
         local array = {}
         for _, arg in pairs(args) do
             table.insert(array, arg)
@@ -297,7 +315,7 @@ local function STDContext()
         return array, "return"
     end)
     
-    context:set("do", function(_, args, context)
+    context:create("do", function(_, args, context)
         for _, arg in pairs(args) do
             if isNode(arg) then
                 local value, ret, err, epos = eval(arg, context) if err then return nil, nil, err, epos end
@@ -309,6 +327,34 @@ local function STDContext()
             end
         end
     end)
+    
+    context:create("string", function(_, args, _)
+        return tostring(args[1]), "return"
+    end)
+    context:create("number", function(_, args, _)
+        return tonumber(args[1]), "return"
+    end)
+    context:create("bool", function(_, args, _)
+        if args[1] then
+            return true, "return"
+        end
+        return false, "return"
+    end)
+
+    local stdPath ="oplang/std.op"
+    local file = io.open(stdPath, "r")
+    if file then
+        local text = file:read("a")
+        file:close()
+        local tokens = lexer.lex(stdPath, text)
+        local node, err, epos = parser.parse(tokens) if err and not node then
+            error("ERROR: "..err)
+        end
+        local _, _, err, epos = eval(node, context) if err then
+            error("ERROR: "..err)
+        end
+    end
+
     return context
 end
 
