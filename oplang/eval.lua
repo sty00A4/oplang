@@ -43,6 +43,12 @@ local function Context()
             ---@param value any
             global = function(self, id, value)
                 if #self.scopes > 0 then
+                    for i = #self.scopes, 1, -1 do
+                        if type(self.scopes[i][id]) ~= "nil" then
+                            self.scopes[i][id] = value
+                            return
+                        end
+                    end
                     self.scopes[1][id] = value
                 end
             end,

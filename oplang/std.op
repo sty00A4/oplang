@@ -1,3 +1,12 @@
+(global @OP_VERSION "a0.1")
 (global @if (func @cond @case @else
     #(do ((bool cond) case else))))
-(global @OP_VERSION "a0.1")
+
+(global @not (func @v
+    #((bool v) false true)))
+(global @or (func @a @b
+    #((bool a) true
+      ((bool b) true false))))
+(global @and (func @a @b
+    #((bool a) ((bool b) true false)
+      false)))
