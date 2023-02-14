@@ -88,6 +88,13 @@ local function parse(tokens)
             advance()
             return Node("call", { head = head, args = args }, pos), nil
         end
+        if token.token == "closure" then
+            local pos = token.pos:copy()
+            advance()
+            local node, err, epos = next() if err and not node then return nil, err, epos end
+            pos:extend(node.pos)
+            return Node("closure", node, pos), nil
+        end
         if token.token == "id" or token.token == "number" or token.token == "string" or token.token == "key" or token.token == "boolean" then
             advance()
             return Node(token.token, token.value, token.pos), nil

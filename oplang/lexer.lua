@@ -90,14 +90,14 @@ local function lex(path, text)
         end
     end
     local function symbol(s)
-        return s == "(" or s == ")" or s == "[" or s == "]" or s == "{" or s == "}" or s == "\"" or s == "@"
+        return s == "(" or s == ")" or s == "[" or s == "]" or s == "{" or s == "}" or s == "\"" or s == "@" or s == "#" or s == ";"
     end
     ---@return Token|nil
     local function next()
         while char():match("%s") and #char() > 0 do
             advance()
         end
-        while char() == "#" and #char() > 0 do
+        while char() == ";" and #char() > 0 do
             advance()
             while not char() == "\n" and #char() > 0 do
                 advance()
@@ -133,6 +133,10 @@ local function lex(path, text)
         if char() == "}" then
             advance()
             return Token("bodyOut", "}", pos)
+        end
+        if char() == "#" then
+            advance()
+            return Token("closure", "#", pos)
         end
         if char() == "\"" then
             advance()

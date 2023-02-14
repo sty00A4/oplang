@@ -50,6 +50,31 @@ local function eval(node, context)
     end
     return nil, nil, "unsupported node: "..tostring(node.node), node.pos
 end
+---@param t table
+local function isPos(t)
+    if type(t) == "table" then
+        local meta = getmetatable(t)
+        if meta then
+            if meta.__name == "position" then
+                if type(t.ln) == "table" and type(t.col) == "table" then
+                    return type(t.ln.start) == "number" and type(t.ln.stop) == "number" and
+                    type(t.col.start) == "number" and type(t.col.stop) == "number"
+                end
+            end
+        end
+    end
+    return false
+end
+---@param t table
+local function isNode(t)
+    if type(t) == "table" then
+        local meta = getmetatable(t)
+        if meta then
+            return meta.__name == "node" and type(t.node) == "string" and isPos(t.pos)
+        end
+    end
+    return false
+end
 NodeEval = {
     ---@param node Node
     ---@param context Context
@@ -86,6 +111,12 @@ NodeEval = {
     ---@return any, Return, string|nil, Position|nil
     ["nil"] = function(node, context)
         return nil, "return"
+    end,
+    ---@param node Node
+    ---@param context Context
+    ---@return any, Return, string|nil, Position|nil
+    closure = function(node, context)
+        return node.attr, "return"
     end,
     ---@param node Node
     ---@param context Context
@@ -224,6 +255,19 @@ local function STDContext()
             table.insert(array, arg)
         end
         return array, "return"
+    end)
+    
+    context:set("do", function(_, args, context)
+        for _, arg in pairs(args) do
+            if isNode(arg) then
+                local value, ret, err, epos = eval(arg, context) if err then return nil, nil, err, epos end
+                if ret then
+                    return value, ret
+                end
+            else
+                return arg, "return"
+            end
+        end
     end)
     return context
 end
