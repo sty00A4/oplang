@@ -1,1 +1,1 @@
-(print (.. "hello " "there"))
+(print (>= 2 1))

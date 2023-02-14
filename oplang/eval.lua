@@ -283,6 +283,24 @@ local function STDContext()
     local concat = linkf(function(a, b)
         return a .. b
     end)
+    local eq = linkf(function(a, b)
+        return a == b
+    end)
+    local ne = linkf(function(a, b)
+        return a ~= b
+    end)
+    local lt = linkf(function(a, b)
+        return a < b
+    end)
+    local le = linkf(function(a, b)
+        return a <= b
+    end)
+    local gt = linkf(function(a, b)
+        return a > b
+    end)
+    local ge = linkf(function(a, b)
+        return a >= b
+    end)
     context:create("+", function (node, args, context)
         local sum
         for _, arg in pairs(args) do
@@ -336,9 +354,6 @@ local function STDContext()
         return sum, "return"
     end)
     context:create("%", function (node, args, context)
-        if #args == 1 then
-            return 
-        end
         local sum
         for _, arg in pairs(args) do
             local err, epos
@@ -351,9 +366,6 @@ local function STDContext()
         return sum, "return"
     end)
     context:create("^", function (node, args, context)
-        if #args == 1 then
-            return 
-        end
         local sum
         for _, arg in pairs(args) do
             local err, epos
@@ -366,9 +378,6 @@ local function STDContext()
         return sum, "return"
     end)
     context:create("..", function (node, args, context)
-        if #args == 1 then
-            return 
-        end
         local sum
         for _, arg in pairs(args) do
             local err, epos
@@ -379,6 +388,66 @@ local function STDContext()
             end
         end
         return sum, "return"
+    end)
+    context:create("==", function (node, args, context)
+        if #args == 0 then
+            return false
+        end
+        for i = 1, #args - 1 do
+            local res, _, err, epos = eq(node, { args[i], args[i+1] }, context) if err then return nil, nil, err, epos end
+            if not res then return false, "return" end
+        end
+        return true, "return"
+    end)
+    context:create("!=", function (node, args, context)
+        if #args == 0 then
+            return false
+        end
+        for i = 1, #args - 1 do
+            local res, _, err, epos = ne(node, { args[i], args[i+1] }, context) if err then return nil, nil, err, epos end
+            if not res then return false, "return" end
+        end
+        return true, "return"
+    end)
+    context:create("<", function (node, args, context)
+        if #args == 0 then
+            return false
+        end
+        for i = 1, #args - 1 do
+            local res, _, err, epos = lt(node, { args[i], args[i+1] }, context) if err then return nil, nil, err, epos end
+            if not res then return false, "return" end
+        end
+        return true, "return"
+    end)
+    context:create("<=", function (node, args, context)
+        if #args == 0 then
+            return false
+        end
+        for i = 1, #args - 1 do
+            local res, _, err, epos = le(node, { args[i], args[i+1] }, context) if err then return nil, nil, err, epos end
+            if not res then return false, "return" end
+        end
+        return true, "return"
+    end)
+    context:create(">", function (node, args, context)
+        if #args == 0 then
+            return false
+        end
+        for i = 1, #args - 1 do
+            local res, _, err, epos = gt(node, { args[i], args[i+1] }, context) if err then return nil, nil, err, epos end
+            if not res then return false, "return" end
+        end
+        return true, "return"
+    end)
+    context:create(">=", function (node, args, context)
+        if #args == 0 then
+            return false
+        end
+        for i = 1, #args - 1 do
+            local res, _, err, epos = ge(node, { args[i], args[i+1] }, context) if err then return nil, nil, err, epos end
+            if not res then return false, "return" end
+        end
+        return true, "return"
     end)
 
     context:create("set", function(node, args, context)
