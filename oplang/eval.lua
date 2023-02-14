@@ -280,6 +280,9 @@ local function STDContext()
     local pow = linkf(function(a, b)
         return a ^ b
     end)
+    local concat = linkf(function(a, b)
+        return a .. b
+    end)
     context:create("+", function (node, args, context)
         local sum
         for _, arg in pairs(args) do
@@ -356,6 +359,21 @@ local function STDContext()
             local err, epos
             if sum then
                 sum, _, err, epos = pow(node, { sum, arg }, context) if err then return nil, nil, err, epos end
+            else
+                sum = arg
+            end
+        end
+        return sum, "return"
+    end)
+    context:create("..", function (node, args, context)
+        if #args == 1 then
+            return 
+        end
+        local sum
+        for _, arg in pairs(args) do
+            local err, epos
+            if sum then
+                sum, _, err, epos = concat(node, { sum, arg }, context) if err then return nil, nil, err, epos end
             else
                 sum = arg
             end
