@@ -178,7 +178,10 @@ NodeEval = {
         end
         local value, _, err, epos = eval(head, context) if err then return nil, nil, err, epos end
         if type(value) == "function" then
-            return value(node, args, context)
+            context:push()
+            local res, ret, err, epos = value(node, args, context) if err then return nil, nil, err, epos end
+            context:pop()
+            return res, ret
         end
         if type(value) == "table" then
             if args[1] then
@@ -300,6 +303,9 @@ local function STDContext()
     end)
     local ge = linkf(function(a, b)
         return a >= b
+    end)
+    local len = linkf(function(a)
+        return #a
     end)
     context:create("+", function (node, args, context)
         local sum
@@ -448,6 +454,10 @@ local function STDContext()
             if not res then return false, "return" end
         end
         return true, "return"
+    end)
+    context:create("len", function (node, args, context)
+        local res, _, err, epos = len(node, args, context) if err then return nil, nil, err, epos end
+        return res, "return"
     end)
 
     context:create("set", function(node, args, context)
