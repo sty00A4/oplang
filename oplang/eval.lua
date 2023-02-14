@@ -178,9 +178,7 @@ NodeEval = {
         end
         local value, _, err, epos = eval(head, context) if err then return nil, nil, err, epos end
         if type(value) == "function" then
-            context:push()
             local res, ret, err, epos = value(node, args, context) if err then return nil, nil, err, epos end
-            context:pop()
             return res, ret
         end
         if type(value) == "table" then
@@ -306,6 +304,9 @@ local function STDContext()
     end)
     local len = linkf(function(a)
         return #a
+    end)
+    local newIndex = linkf(function(a, b, c)
+        a[b] = c
     end)
     context:create("+", function (node, args, context)
         local sum
@@ -463,23 +464,30 @@ local function STDContext()
     context:create("set", function(node, args, context)
         if type(args[1]) == "string" then
             context:set(args[1], args[2])
-        else
-            return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
+            return
         end
+        return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
+    end)
+    context:create("seti", function(node, args, context)
+        if type(args[1]) == "table" then
+            local _, _, err, epos = newIndex(node, args, context) if err then return nil, nil, err, epos end
+            return
+        end
+        return nil, nil, "bad argument #1 (expected table, got "..type(args[1])..")", node.pos
     end)
     context:create("create", function(node, args, context)
         if type(args[1]) == "string" then
             context:create(args[1], args[2])
-        else
-            return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
+            return
         end
+        return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
     end)
     context:create("global", function(node, args, context)
         if type(args[1]) == "string" then
             context:global(args[1], args[2])
-        else
-            return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
+            return
         end
+        return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
     end)
     context:create("func", function(node, args, context)
         local idx = 1
@@ -493,10 +501,12 @@ local function STDContext()
         end
         local funcNode = args[idx]
         return function(_, args, context)
+            context:push()
             for i, param in ipairs(params) do
                 context:create(param, args[i])
             end
             local value, _, err, epos = eval(funcNode, context) if err then return nil, nil, err, epos end
+            context:pop()
             return value
         end, "return"
     end)
@@ -522,16 +532,20 @@ local function STDContext()
     end)
     
     context:create("do", function(_, args, context)
+        context:push()
         for _, arg in pairs(args) do
             if isNode(arg) then
                 local value, ret, err, epos = eval(arg, context) if err then return nil, nil, err, epos end
                 if ret then
+                    context:pop()
                     return value, ret
                 end
             else
+                context:pop()
                 return arg, "return"
             end
         end
+        context:pop()
     end)
     
     context:create("string", function(_, args, _)
