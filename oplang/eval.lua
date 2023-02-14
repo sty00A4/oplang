@@ -257,9 +257,7 @@ local function STDContext()
     local function link(value, prefix)
         if type(value) == "table" then
             for k, v in pairs(value) do
-                if k ~= "_ENV" and k ~= "_G" then
-                    link(v, prefix and prefix..fieldJoin..k or k)
-                end
+                link(v, prefix and prefix..fieldJoin..k or k)
             end
             return
         end
@@ -270,7 +268,18 @@ local function STDContext()
             context:set(prefix, value)
         end
     end
-    link(_G)
+    for _, prefix in ipairs({
+        "assert", "bit32", "io", "coroutine", "debug", "error", "getmetatable",
+        "string", "table", "math", "os", "next", "print", "pcall", "rawequal",
+        "rawset", "rawget", "setmetatable", "tonumber", "tostring", "unpack",
+        "utf8", "xpcall",
+        "colors", "commands", "disk", "fs", "gps", "help", "http", "keys",
+        "multishell", "paintutils", "parallel", "peripheral", "pocket", "rednet",
+        "redstone", "settings", "shell", "term", "textutils", "turtle", "vector",
+        "window"
+    }) do
+        link(_G[prefix], prefix)
+    end
     local add = linkf(function(a, b)
         return a + b
     end)
