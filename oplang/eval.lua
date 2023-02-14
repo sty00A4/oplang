@@ -7,9 +7,9 @@ local function Context()
             ---@param id string
             ---@return any
             get = function(self, id)
-                for _, scope in ipairs(self.scopes) do
-                    if type(scope[id]) ~= "nil" then
-                        return scope[id]
+                for i = #self.scopes, 1, -1 do
+                    if type(self.scopes[i][id]) ~= "nil" then
+                        return self.scopes[i][id]
                     end
                 end
             end,
@@ -17,6 +17,20 @@ local function Context()
             ---@param id string
             ---@param value any
             set = function(self, id, value)
+                if #self.scopes > 0 then
+                    for i = #self.scopes, 1, -1 do
+                        if type(self.scopes[i][id]) ~= "nil" then
+                            self.scopes[i][id] = value
+                            return
+                        end
+                    end
+                    self.scopes[#self.scopes][id] = value
+                end
+            end,
+            ---@param self Context
+            ---@param id string
+            ---@param value any
+            create = function(self, id, value)
                 if #self.scopes > 0 then
                     self.scopes[#self.scopes][id] = value
                 end
@@ -229,12 +243,38 @@ local function STDContext()
     end
     link(_G)
 
-    context:set("set", function(node, args, context)
+    context:create("set", function(node, args, context)
         if type(args[1]) == "string" then
             context:set(args[1], args[2])
         else
             return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
         end
+    end)
+    context:create("create", function(node, args, context)
+        if type(args[1]) == "string" then
+            context:create(args[1], args[2])
+        else
+            return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
+        end
+    end)
+    context:create("func", function(node, args, context)
+        local idx = 1
+        local params = {}
+        while type(args[idx]) == "string" do
+            table.insert(params, args[idx])
+            idx = idx + 1
+        end
+        if not isNode(args[idx]) then
+            return nil, nil, "bad last argument (expected node table, got "..type(args[idx])..")", node.pos
+        end
+        local funcNode = args[idx]
+        return function(_, args, context)
+            for i, param in ipairs(params) do
+                context:create(param, args[i])
+            end
+            local value, _, err, epos = eval(funcNode, context) if err then return nil, nil, err, epos end
+            return value
+        end, "return"
     end)
 
     context:set("table", function(_, args, _)
