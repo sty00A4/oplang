@@ -1,6 +1,6 @@
 (global @OP_VERSION "a0.1")
-(global @if (func @cond @case @else
-    #(do ((bool cond) case else))))
+(global @if (func-inline @:cond @:case @:else
+    #(do ((bool :cond) :case :else))))
 
 (global @not (func @v
     #((bool v) false true)))

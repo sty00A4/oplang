@@ -1,10 +1,3 @@
-(term-clear)
-(term-setCursorPos 1 1)
-
-(term-setBackgroundColor colors-red)
-(term-setTextColor colors-black)
-
-(print "DANGER\n")
-
-(term-setBackgroundColor colors-black)
-(term-setTextColor colors-white)
+(set @cond true)
+(if cond #(set @cond false))
+(print cond)
