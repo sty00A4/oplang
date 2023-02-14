@@ -1,2 +1,2 @@
-(set @list (table @name "sty" @age 18))
-(print (list @age))
+(set @list (array 1 2 3))
+(print (false 1 0))

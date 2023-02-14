@@ -84,6 +84,12 @@ NodeEval = {
     ---@param node Node
     ---@param context Context
     ---@return any, Return, string|nil, Position|nil
+    ["nil"] = function(node, context)
+        return nil, "return"
+    end,
+    ---@param node Node
+    ---@param context Context
+    ---@return any, Return, string|nil, Position|nil
     chunk = function(node, context)
         context:push()
         for _, n in ipairs(node.attr) do
@@ -114,10 +120,36 @@ NodeEval = {
         end
         if type(value) == "table" then
             if args[1] then
+                if args[2] then
+                    if type(args[1]) ~= "number" then
+                        return nil, nil, "bad argument #1 (expected number, got "..type(args[1])..")", node.pos
+                    end
+                    if type(args[2]) ~= "number" then
+                        return nil, nil, "bad argument #2 (expected number, got "..type(args[2])..")", node.pos
+                    end
+                    return table.sub(value, args[1], args[2]), "return"
+                end
                 return value[args[1]], "return"
-            else
-                return value, "return"
             end
+            return value, "return"
+        end
+        if type(value) == "string" then
+            if args[1] then
+                if type(args[1]) ~= "number" then
+                    return nil, nil, "bad argument #1 (expected number, got "..type(args[1])..")", node.pos
+                end
+                if args[2] then
+                    if type(args[2]) ~= "number" then
+                        return nil, nil, "bad argument #2 (expected number, got "..type(args[2])..")", node.pos
+                    end
+                    return value:sub(args[1], args[2]), "return"
+                end
+                return value:sub(args[1]), "return"
+            end
+            return value, "return"
+        end
+        if type(value) == "boolean" then
+            return value and args[1] or args[2]
         end
         return nil, nil, "expected function|table for the head, got "..type(value), head.pos
     end
