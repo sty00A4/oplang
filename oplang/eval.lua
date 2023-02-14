@@ -389,8 +389,8 @@ local function STDContext()
         end
         return sum, "return"
     end)
-    context:create("==", function (node, args, context)
-        if #args == 0 then
+    context:create("=", function (node, args, context)
+        if #args <= 1 then
             return false
         end
         for i = 1, #args - 1 do
@@ -400,7 +400,7 @@ local function STDContext()
         return true, "return"
     end)
     context:create("!=", function (node, args, context)
-        if #args == 0 then
+        if #args <= 1 then
             return false
         end
         for i = 1, #args - 1 do
@@ -410,7 +410,7 @@ local function STDContext()
         return true, "return"
     end)
     context:create("<", function (node, args, context)
-        if #args == 0 then
+        if #args <= 1 then
             return false
         end
         for i = 1, #args - 1 do
@@ -420,7 +420,7 @@ local function STDContext()
         return true, "return"
     end)
     context:create("<=", function (node, args, context)
-        if #args == 0 then
+        if #args <= 1 then
             return false
         end
         for i = 1, #args - 1 do
@@ -430,7 +430,7 @@ local function STDContext()
         return true, "return"
     end)
     context:create(">", function (node, args, context)
-        if #args == 0 then
+        if #args <= 1 then
             return false
         end
         for i = 1, #args - 1 do
@@ -440,7 +440,7 @@ local function STDContext()
         return true, "return"
     end)
     context:create(">=", function (node, args, context)
-        if #args == 0 then
+        if #args <= 1 then
             return false
         end
         for i = 1, #args - 1 do
