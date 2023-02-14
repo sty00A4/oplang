@@ -10,3 +10,14 @@
 (global @and (func @a @b
     #((bool a) ((bool b) true false)
       false)))
+
+(global @number? (func @v
+    #(= (type v) "number")))
+(global @bool? (func @v
+    #(= (type v) "boolean")))
+(global @string? (func @v
+    #(= (type v) "string")))
+(global @table? (func @v
+    #(= (type v) "table")))
+(global @nil? (func @v
+    #(= (type v) "nil")))

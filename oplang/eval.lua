@@ -580,6 +580,13 @@ local function STDContext()
         return false, "return"
     end)
 
+    context:create("type", function (_, args, _)
+        if type(args[1]) == "nil" then
+            return "nil"
+        end
+        return type(args[1])
+    end)
+
     local stdPath ="oplang/std.op"
     local file = io.open(stdPath, "r")
     if file then
