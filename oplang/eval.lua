@@ -638,13 +638,13 @@ local function STDContext()
     context:create("forn", function(node, args, context)
         local id, start, stop = table.unpack(args)
         if type(id) ~= "string" then
-            return nil, nil, "bad argument #1 (expected string, got "..type(key)..")", node.pos
+            return nil, nil, "bad argument #1 (expected string, got "..type(id)..")", node.pos
         end
         if type(start) ~= "number" then
-            return nil, nil, "bad argument #2 (expected number, got "..type(value)..")", node.pos
+            return nil, nil, "bad argument #2 (expected number, got "..type(start)..")", node.pos
         end
         if type(stop) ~= "number" then
-            return nil, nil, "bad argument #3 (expected number, got "..type(value)..")", node.pos
+            return nil, nil, "bad argument #3 (expected number, got "..type(stop)..")", node.pos
         end
         local step = 1
         local closure = args[4]
