@@ -54,11 +54,12 @@
     )
     (set @res)
     (for @k @v list #{
-        (print k v (nil? res) (= (type res) "nil"))
-        (if (nil? res)
+        (print k v res (= (type res) "nil"))
+        (if (= (type res) "nil")
             #(set @res v)
             #(set @res (f res v))
         )
+        (print res)
     })
     res
 }))

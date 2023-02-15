@@ -532,8 +532,7 @@ local function STDContext()
             for i, param in ipairs(params) do
                 context:create(param, args[i])
             end
-            local value, _, err, epos = eval(funcNode, context) if err then return nil, nil, err, epos end
-            context:pop()
+            local value, _, err, epos = eval(funcNode, context) context:pop() if err then return nil, nil, err, epos end
             return value
         end, "return"
     end)
@@ -584,7 +583,7 @@ local function STDContext()
         context:push()
         for _, arg in pairs(args) do
             if isNode(arg) then
-                local value, ret, err, epos = eval(arg, context) if err then return nil, nil, err, epos end
+                local value, ret, err, epos = eval(arg, context) if err then context:pop() return nil, nil, err, epos end
                 if ret then
                     context:pop()
                     return value, ret
@@ -610,20 +609,18 @@ local function STDContext()
         if not isNode(closure) then
             return nil, nil, "bad argument #4 (expected node table, got "..type(closure)..")", node.pos
         end
-        context:push()
         for k, v in pairs(iterator) do
-            context:set(key, k)
-            context:set(value, v)
-            local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
+            context:push()
+            context:create(key, k)
+            context:create(value, v)
+            local value, ret, err, epos = eval(closure, context) context:pop() if err then return nil, nil, err, epos end
             if ret == "return" then
-                context:pop()
                 return value, ret
             end
             if ret == "break" then
                 break
             end
         end
-        context:pop()
     end)
     context:create("fori", function(node, args, context)
         local key, value, iterator, closure = table.unpack(args)
@@ -639,20 +636,18 @@ local function STDContext()
         if not isNode(closure) then
             return nil, nil, "bad argument #4 (expected node table, got "..type(closure)..")", node.pos
         end
-        context:push()
         for k, v in ipairs(iterator) do
-            context:set(key, k)
-            context:set(value, v)
-            local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
+            context:push()
+            context:create(key, k)
+            context:create(value, v)
+            local value, ret, err, epos = eval(closure, context) context:pop() if err then return nil, nil, err, epos end
             if ret == "return" then
-                context:pop()
                 return value, ret
             end
             if ret == "break" then
                 break
             end
         end
-        context:pop()
     end)
     context:create("forn", function(node, args, context)
         local id, start, stop = table.unpack(args)
@@ -677,7 +672,7 @@ local function STDContext()
         context:push()
         for i = start, stop, step do
             context:set(id, i)
-            local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
+            local value, ret, err, epos = eval(closure, context) if err then context:pop() return nil, nil, err, epos end
             if ret == "return" then
                 context:pop()
                 return value, ret
@@ -697,9 +692,9 @@ local function STDContext()
             return nil, nil, "bad argument #2 (expected node table, got "..type(closure)..")", node.pos
         end
         context:push()
-        local cond, _, err, epos = eval(condn, context) if err then return nil, nil, err, epos end
+        local cond, _, err, epos = eval(condn, context) if err then context:pop() return nil, nil, err, epos end
         while cond do
-            local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
+            local value, ret, err, epos = eval(closure, context) if err then context:pop() return nil, nil, err, epos end
             if ret == "return" then
                 context:pop()
                 return value, ret
@@ -707,7 +702,7 @@ local function STDContext()
             if ret == "break" then
                 break
             end
-            cond, _, err, epos = eval(condn, context) if err then return nil, nil, err, epos end
+            cond, _, err, epos = eval(condn, context) if err then context:pop() return nil, nil, err, epos end
         end
         context:pop()
     end)
