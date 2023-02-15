@@ -7,12 +7,15 @@ local function Scope()
         {
             vars = {},
             defs = {},
+            const = {},
             ---@param self Scope
             ---@param id string
+            ---@param const boolean|nil
             ---@param value any
-            set = function(self, id, value)
+            set = function(self, id, value, const)
                 self.vars[id] = value
                 if not self:exist(id) then table.insert(self.defs, id) end
+                self.const[id] = const
             end,
             ---@param self Scope
             ---@param id string
@@ -28,7 +31,12 @@ local function Scope()
                     end
                 end
                 return false
-            end
+            end,
+            ---@param self Scope
+            ---@param id string
+            isConst = function(self, id)
+                return self.const[id]
+            end,
         },
         {
             __name = "scope"
@@ -53,34 +61,55 @@ local function Context()
             end,
             ---@param self Context
             ---@param id string
+            ---@return any
+            isConst = function(self, id)
+                for i = #self.scopes, 1, -1 do
+                    if self.scopes[i]:exist(id) then
+                        return self.scopes[i]:isConst(id)
+                    end
+                end
+                return false
+            end,
+            ---@param self Context
+            ---@param id string
+            ---@param const boolean|nil
             ---@param value any
-            set = function(self, id, value)
+            ---@return string|nil
+            set = function(self, id, value, const)
                 if #self.scopes > 0 then
                     for i = #self.scopes, 1, -1 do
                         if self.scopes[i]:exist(id) then
-                            self.scopes[i]:set(id, value)
+                            if self.scopes[i]:isConst(id) then return "'"..id.."'".." is already defined as a constant" end
+                            self.scopes[i]:set(id, value, const)
                             return
                         end
                     end
                     self.scopes[#self.scopes]:set(id, value)
                 end
+                return "no scope to set variable in"
             end,
             ---@param self Context
             ---@param id string
+            ---@param const boolean|nil
             ---@param value any
-            create = function(self, id, value)
+            create = function(self, id, value, const)
                 if #self.scopes > 0 then
-                    self.scopes[#self.scopes]:set(id, value)
+                    for i = #self.scopes, 1, -1 do
+                        if self.scopes[i]:isConst(id) then return "'"..id.."'".." is already defined as a constant" end
+                    end
+                    self.scopes[#self.scopes]:set(id, value, const)
                 end
             end,
             ---@param self Context
             ---@param id string
+            ---@param const boolean|nil
             ---@param value any
-            global = function(self, id, value)
+            global = function(self, id, value, const)
                 if #self.scopes > 0 then
                     for i = #self.scopes, 1, -1 do
                         if self.scopes[i]:exist(id) then
-                            self.scopes[i]:set(id, value)
+                            if self.scopes[i]:isConst(id) then return "'"..id.."'".." is already defined as a constant" end
+                            self.scopes[i]:set(id, value, const)
                             return
                         end
                     end
@@ -211,7 +240,7 @@ NodeEval = {
         context:pop()
     end,
     body = function(node, context)
-        context:push()
+        context:push(node.pos)
         for _, n in ipairs(node.attr) do
             local value, ret, err, epos = eval(n, context) if err then return nil, nil, err, epos end
             if ret then
@@ -307,7 +336,7 @@ local function STDContext()
     ---@param prefix string|nil
     local function link(value, prefix)
         if type(value) == "table" then
-            if prefix then context:set(prefix, value) end
+            if prefix then context:global(prefix, value, true) end
             for k, v in pairs(value) do
                 link(v, prefix and prefix..fieldJoin..k or k)
             end
@@ -315,9 +344,9 @@ local function STDContext()
         end
         if not prefix then prefix = "?" end
         if type(value) == "function" then
-            context:set(prefix, linkf(value))
+            context:global(prefix, linkf(value), true)
         else
-            context:set(prefix, value)
+            context:global(prefix, value, true)
         end
     end
     for _, prefix in ipairs({
@@ -535,7 +564,14 @@ local function STDContext()
 
     context:create("set", function(node, args, context)
         if type(args[1]) == "string" then
-            context:set(args[1], args[2])
+            local err = context:set(args[1], args[2]) if err then return nil, nil, err, node.pos end
+            return
+        end
+        return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
+    end)
+    context:create("const", function(node, args, context)
+        if type(args[1]) == "string" then
+            local err = context:set(args[1], args[2], true) if err then return nil, nil, err, node.pos end
             return
         end
         return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
@@ -554,9 +590,23 @@ local function STDContext()
         end
         return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
     end)
+    context:create("create-const", function(node, args, context)
+        if type(args[1]) == "string" then
+            context:create(args[1], args[2], true)
+            return
+        end
+        return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
+    end)
     context:create("global", function(node, args, context)
         if type(args[1]) == "string" then
             context:global(args[1], args[2])
+            return
+        end
+        return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
+    end)
+    context:create("global-const", function(node, args, context)
+        if type(args[1]) == "string" then
+            context:global(args[1], args[2], true)
             return
         end
         return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
@@ -629,8 +679,8 @@ local function STDContext()
         return array, "return"
     end)
     
-    context:create("do", function(_, args, context)
-        context:push()
+    context:create("do", function(node, args, context)
+        context:push(node.pos)
         for _, arg in pairs(args) do
             if isNode(arg) then
                 local value, ret, err, epos = eval(arg, context) if err then return nil, nil, err, epos end
@@ -660,7 +710,7 @@ local function STDContext()
             return nil, nil, "bad argument #4 (expected node table, got "..type(closure)..")", node.pos
         end
         for k, v in pairs(iterator) do
-            context:push()
+            context:push(node.pos)
             context:create(key, k)
             context:create(value, v)
             local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
@@ -688,7 +738,7 @@ local function STDContext()
             return nil, nil, "bad argument #4 (expected node table, got "..type(closure)..")", node.pos
         end
         for k, v in ipairs(iterator) do
-            context:push()
+            context:push(node.pos)
             context:create(key, k)
             context:create(value, v)
             local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
@@ -721,19 +771,18 @@ local function STDContext()
         if not isNode(closure) then
             return nil, nil, "bad argument #4 (expected node table, got "..type(closure)..")", node.pos
         end
-        context:push()
         for i = start, stop, step do
-            context:set(id, i)
+            context:push(node.pos)
+            context:create(id, i)
             local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
+            context:pop()
             if ret == "return" then
-                context:pop()
                 return value, ret
             end
             if ret == "break" then
                 break
             end
         end
-        context:pop()
     end)
     context:create("while", function(node, args, context)
         local condn, closure = table.unpack(args)
@@ -743,20 +792,21 @@ local function STDContext()
         if not isNode(closure) then
             return nil, nil, "bad argument #2 (expected node table, got "..type(closure)..")", node.pos
         end
-        context:push()
         local cond, _, err, epos = eval(condn, context) if err then return nil, nil, err, epos end
         while cond do
+            context:push(node.pos)
             local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
             if ret == "return" then
                 context:pop()
                 return value, ret
             end
             if ret == "break" then
+                context:pop()
                 break
             end
             cond, _, err, epos = eval(condn, context) if err then return nil, nil, err, epos end
+            context:pop()
         end
-        context:pop()
     end)
     
     context:create("string", function(_, args, _)

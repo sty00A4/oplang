@@ -1,1 +1,1 @@
-(print colors)
+(set @table (table))
