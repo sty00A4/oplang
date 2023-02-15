@@ -61,3 +61,17 @@
     )
     res
 }))
+(global @check (func @f @list #{
+    (if (not (table? list))
+        #(error (.. "bad argument #1 (expected table, got " (type list) ")"))
+    )
+    (if (not (func? f))
+        #(error (.. "bad argument #2 (expected function, got " (type f) ")"))
+    )
+    (forn @i 1 (- (len list) 1)
+        #(if (not (f (list i) (list (+ i 1))))
+            false
+        )
+    )
+    true
+}))
