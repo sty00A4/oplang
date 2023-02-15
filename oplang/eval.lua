@@ -40,7 +40,7 @@ local function Context()
     return setmetatable(
         ---@class Context
         {
-            scopes = { Scope() },
+            scopes = { Scope() }, traceback = {},
             ---@param self Context
             ---@param id string
             ---@return any
@@ -88,16 +88,26 @@ local function Context()
                 end
             end,
             ---@param self Context
-            push = function(self)
+            ---@param pos Position
+            push = function(self, pos)
+                table.insert(self.traceback, pos)
                 table.insert(self.scopes, Scope())
             end,
             ---@param self Context
-            ---@return Scope|nil
+            ---@return Scope|nil, Position|nil
             pop = function(self)
                 if #self.scopes > 1 then
-                    return table.remove(self.scopes)
+                    return table.remove(self.scopes), table.remove(self.traceback)
                 end
             end,
+            ---@param self Context
+            trace = function(self)
+                local s = "Trace back (first on top):\n"
+                for _, pos in ipairs(self.traceback) do
+                    s = s .. tostring(pos) .. "\n"
+                end
+                return s
+            end
         },
         {
             __name = "context"
@@ -188,7 +198,7 @@ NodeEval = {
     ---@param context Context
     ---@return any, Return, string|nil, Position|nil
     chunk = function(node, context)
-        context:push()
+        context:push(node.pos)
         for _, n in ipairs(node.attr) do
             local value, ret, err, epos = eval(n, context) if err then return nil, nil, err, epos end
             if ret then
@@ -310,7 +320,7 @@ local function STDContext()
         end
     end
     for _, prefix in ipairs({
-        "assert", "bit32", "io", "coroutine", "debug", "error", "getmetatable",
+        "assert", "bit32", "io", "coroutine", "debug", "getmetatable",
         "string", "table", "math", "os", "next", "print", "pcall", "rawequal",
         "rawset", "rawget", "setmetatable", "tonumber", "tostring", "unpack",
         "utf8", "xpcall",
@@ -561,15 +571,17 @@ local function STDContext()
             return nil, nil, "bad last argument (expected node table, got "..type(args[idx])..")", node.pos
         end
         local funcNode = args[idx]
+        ---@param node Node
         ---@param args table
         ---@param context Context
         ---@return any, nil, string|nil, Position|nil
-        return function(_, args, context)
-            context:push()
+        return function(node, args, context)
+            context:push(node.pos)
             for i, param in ipairs(params) do
                 context:create(param, args[i])
             end
-            local value, _, err, epos = eval(funcNode, context) context:pop() if err then return nil, nil, err, epos end
+            local value, _, err, epos = eval(funcNode, context) if err then return nil, nil, err, epos end
+            context:pop()
             return value
         end, "return"
     end)
@@ -620,7 +632,7 @@ local function STDContext()
         context:push()
         for _, arg in pairs(args) do
             if isNode(arg) then
-                local value, ret, err, epos = eval(arg, context) if err then context:pop() return nil, nil, err, epos end
+                local value, ret, err, epos = eval(arg, context) if err then return nil, nil, err, epos end
                 if ret then
                     context:pop()
                     return value, ret
@@ -650,7 +662,8 @@ local function STDContext()
             context:push()
             context:create(key, k)
             context:create(value, v)
-            local value, ret, err, epos = eval(closure, context) context:pop() if err then return nil, nil, err, epos end
+            local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
+            context:pop() 
             if ret == "return" then
                 return value, ret
             end
@@ -677,7 +690,8 @@ local function STDContext()
             context:push()
             context:create(key, k)
             context:create(value, v)
-            local value, ret, err, epos = eval(closure, context) context:pop() if err then return nil, nil, err, epos end
+            local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
+            context:pop() 
             if ret == "return" then
                 return value, ret
             end
@@ -709,7 +723,7 @@ local function STDContext()
         context:push()
         for i = start, stop, step do
             context:set(id, i)
-            local value, ret, err, epos = eval(closure, context) if err then context:pop() return nil, nil, err, epos end
+            local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
             if ret == "return" then
                 context:pop()
                 return value, ret
@@ -729,9 +743,9 @@ local function STDContext()
             return nil, nil, "bad argument #2 (expected node table, got "..type(closure)..")", node.pos
         end
         context:push()
-        local cond, _, err, epos = eval(condn, context) if err then context:pop() return nil, nil, err, epos end
+        local cond, _, err, epos = eval(condn, context) if err then return nil, nil, err, epos end
         while cond do
-            local value, ret, err, epos = eval(closure, context) if err then context:pop() return nil, nil, err, epos end
+            local value, ret, err, epos = eval(closure, context) if err then return nil, nil, err, epos end
             if ret == "return" then
                 context:pop()
                 return value, ret
@@ -739,7 +753,7 @@ local function STDContext()
             if ret == "break" then
                 break
             end
-            cond, _, err, epos = eval(condn, context) if err then context:pop() return nil, nil, err, epos end
+            cond, _, err, epos = eval(condn, context) if err then return nil, nil, err, epos end
         end
         context:pop()
     end)
@@ -762,6 +776,10 @@ local function STDContext()
             return "nil"
         end
         return type(args[1])
+    end)
+    
+    context:create("error", function (node, args, context)
+        return nil, nil, tostring(args[1]), node.pos
     end)
 
     local stdPath = "oplang/std.op"

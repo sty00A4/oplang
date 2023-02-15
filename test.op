@@ -1,1 +1,1 @@
-(print (check < (array 1 2 3 4)))
+(print (check 1 (array 1 2 3 4)))

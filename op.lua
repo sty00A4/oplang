@@ -13,12 +13,12 @@ if args[1] then
     local tokens = lang.lexer.lex(path, text)
     -- for _, token in ipairs(tokens) do io.write(tostring(token).." ") end print()
     local node, err, epos = lang.parser.parse(tokens) if err and not node then
-        print("ERROR: "..err.." - "..tostring(epos))
+        print(tostring(epos).." - ERROR: "..err)
     end
     -- print(node:repr())
     local context = lang.eval.STDContext()
     local value, ret, err, epos = lang.eval.eval(node, context) if err then
-        print("ERROR: "..err.." - "..tostring(epos))
+        print(tostring(epos).." - ERROR: "..err.."\n"..context:trace())
     end
     if ret == "return" then print(value) end
 end
