@@ -307,6 +307,7 @@ local function STDContext()
     ---@param prefix string|nil
     local function link(value, prefix)
         if type(value) == "table" then
+            if prefix then context:set(prefix, value) end
             for k, v in pairs(value) do
                 link(v, prefix and prefix..fieldJoin..k or k)
             end
