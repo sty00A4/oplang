@@ -1,18 +1,53 @@
 local lexer = require "oplang.lexer"
 local parser = require "oplang.parser"
 
+local function Scope()
+    return setmetatable(
+        ---@class Scope
+        {
+            vars = {},
+            defs = {},
+            ---@param self Scope
+            ---@param id string
+            ---@param value any
+            set = function(self, id, value)
+                self.vars[id] = value
+                if not self:exist(id) then table.insert(self.defs, id) end
+            end,
+            ---@param self Scope
+            ---@param id string
+            get = function(self, id)
+                return self.vars[id]
+            end,
+            ---@param self Scope
+            ---@param id string
+            exist = function(self, id)
+                for _, reg in ipairs(self.defs) do
+                    if reg == id then
+                        return true
+                    end
+                end
+                return false
+            end
+        },
+        {
+            __name = "scope"
+        }
+    )
+end
+
 local function Context()
     return setmetatable(
         ---@class Context
         {
-            scopes = { {} },
+            scopes = { Scope() },
             ---@param self Context
             ---@param id string
             ---@return any
             get = function(self, id)
                 for i = #self.scopes, 1, -1 do
-                    if type(self.scopes[i][id]) ~= "nil" then
-                        return self.scopes[i][id]
+                    if self.scopes[i]:exist(id) then
+                        return self.scopes[i]:get(id)
                     end
                 end
             end,
@@ -22,12 +57,12 @@ local function Context()
             set = function(self, id, value)
                 if #self.scopes > 0 then
                     for i = #self.scopes, 1, -1 do
-                        if type(self.scopes[i][id]) ~= "nil" then
-                            self.scopes[i][id] = value
+                        if self.scopes[i]:exist(id) then
+                            self.scopes[i]:set(id, value)
                             return
                         end
                     end
-                    self.scopes[#self.scopes][id] = value
+                    self.scopes[#self.scopes]:set(id, value)
                 end
             end,
             ---@param self Context
@@ -35,7 +70,7 @@ local function Context()
             ---@param value any
             create = function(self, id, value)
                 if #self.scopes > 0 then
-                    self.scopes[#self.scopes][id] = value
+                    self.scopes[#self.scopes]:set(id, value)
                 end
             end,
             ---@param self Context
@@ -44,20 +79,20 @@ local function Context()
             global = function(self, id, value)
                 if #self.scopes > 0 then
                     for i = #self.scopes, 1, -1 do
-                        if type(self.scopes[i][id]) ~= "nil" then
-                            self.scopes[i][id] = value
+                        if self.scopes[i]:exist(id) then
+                            self.scopes[i]:set(id, value)
                             return
                         end
                     end
-                    self.scopes[1][id] = value
+                    self.scopes[1]:set(id, value)
                 end
             end,
             ---@param self Context
             push = function(self)
-                table.insert(self.scopes, {})
+                table.insert(self.scopes, Scope())
             end,
             ---@param self Context
-            ---@return table|nil
+            ---@return Scope|nil
             pop = function(self)
                 if #self.scopes > 1 then
                     return table.remove(self.scopes)
@@ -180,8 +215,11 @@ NodeEval = {
     ---@param context Context
     ---@return any, Return, string|nil, Position|nil
     call = function(node, context)
+        ---@type Node
         local head = node.attr.head
+        ---@type table<integer, Node>
         local nargs = node.attr.args
+        ---@type table<integer, any>
         local args = {}
         for k, narg in pairs(nargs) do
             local err, epos
@@ -246,7 +284,6 @@ local function STDContext()
         return function (node, args, _)
             local res = { pcall(func, table.unpack(args)) }
             if res[1] then
-
                 table.remove(res, 1)
                 if #res == 1 then
                     return res[1]

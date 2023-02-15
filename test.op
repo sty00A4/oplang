@@ -1,1 +1,1 @@
-(print (reduce (array 1 2 3) +))
+(print (reduce > (array 1 2 3 4)))

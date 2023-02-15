@@ -45,7 +45,7 @@
     (for @k @v list #(seti list k (f v)))
     list
 }))
-(global @reduce (func @list @f #{
+(global @reduce (func @f @list #{
     (if (not (table? list))
         #(error (.. "bad argument #1 (expected table, got " (type list) ")"))
     )
@@ -53,13 +53,11 @@
         #(error (.. "bad argument #2 (expected function, got " (type f) ")"))
     )
     (set @res)
-    (for @k @v list #{
-        (print k v res (= (type res) "nil"))
-        (if (= (type res) "nil")
+    (for @k @v list
+        #(if (nil? res)
             #(set @res v)
             #(set @res (f res v))
         )
-        (print res)
-    })
+    )
     res
 }))
