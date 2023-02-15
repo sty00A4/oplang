@@ -223,7 +223,11 @@ NodeEval = {
             return value, "return"
         end
         if type(value) == "boolean" then
-            return value and args[1] or args[2]
+            if value then
+                return args[1]
+            else
+                return args[2]
+            end
         end
         if type(value) == "number" then
             return args[value]
@@ -509,7 +513,7 @@ local function STDContext()
         end
         return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
     end)
-    context:create("func", function(node, args, context)
+    context:create("func", function(node, args, _)
         local idx = 1
         local params = {}
         while type(args[idx]) == "string" do
@@ -520,6 +524,9 @@ local function STDContext()
             return nil, nil, "bad last argument (expected node table, got "..type(args[idx])..")", node.pos
         end
         local funcNode = args[idx]
+        ---@param args table
+        ---@param context Context
+        ---@return any, nil, string|nil, Position|nil
         return function(_, args, context)
             context:push()
             for i, param in ipairs(params) do
@@ -530,7 +537,7 @@ local function STDContext()
             return value
         end, "return"
     end)
-    context:create("func-inline", function(node, args, context)
+    context:create("func-inline", function(node, args, _)
         local idx = 1
         local params = {}
         while type(args[idx]) == "string" do
@@ -541,12 +548,15 @@ local function STDContext()
             return nil, nil, "bad last argument (expected node table, got "..type(args[idx])..")", node.pos
         end
         local funcNode = args[idx]
+        ---@param args table
+        ---@param context Context
+        ---@return any, Return, string|nil, Position|nil
         return function(_, args, context)
             for i, param in ipairs(params) do
                 context:create(param, args[i])
             end
-            local value, _, err, epos = eval(funcNode, context) if err then return nil, nil, err, epos end
-            return value
+            local value, ret, err, epos = eval(funcNode, context) if err then return nil, nil, err, epos end
+            return value, ret
         end, "return"
     end)
 

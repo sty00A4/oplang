@@ -20,4 +20,5 @@ if args[1] then
     local value, ret, err, epos = lang.eval.eval(node, context) if err then
         print("ERROR: "..err)
     end
+    if ret == "return" then print(value) end
 end

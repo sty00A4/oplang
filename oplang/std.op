@@ -6,18 +6,59 @@
     #((bool v) false true)))
 (global @or (func @a @b
     #((bool a) true
-      ((bool b) true false))))
+      ((bool b) true false)
+    )
+))
 (global @and (func @a @b
-    #((bool a) ((bool b) true false)
-      false)))
+    #((bool a)
+        ((bool b) true false)
+        false
+    )
+))
 
 (global @number? (func @v
-    #(= (type v) "number")))
+    #(= (type v) "number")
+))
 (global @bool? (func @v
-    #(= (type v) "boolean")))
+    #(= (type v) "boolean")
+))
 (global @string? (func @v
-    #(= (type v) "string")))
+    #(= (type v) "string")
+))
 (global @table? (func @v
-    #(= (type v) "table")))
+    #(= (type v) "table")
+))
+(global @func? (func @v
+    #(= (type v) "function")
+))
 (global @nil? (func @v
-    #(= (type v) "nil")))
+    #(= (type v) "nil")
+))
+
+(global @map (func @list @f #{
+    (if (not (table? list))
+        #(error (.. "bad argument #1 (expected table, got " (type list) ")"))
+    )
+    (if (not (func? f))
+        #(error (.. "bad argument #2 (expected function, got " (type f) ")"))
+    )
+    (for @k @v list #(seti list k (f v)))
+    list
+}))
+(global @reduce (func @list @f #{
+    (if (not (table? list))
+        #(error (.. "bad argument #1 (expected table, got " (type list) ")"))
+    )
+    (if (not (func? f))
+        #(error (.. "bad argument #2 (expected function, got " (type f) ")"))
+    )
+    (set @res)
+    (for @k @v list #{
+        (print k v (nil? res) (= (type res) "nil"))
+        (if (nil? res)
+            #(set @res v)
+            #(set @res (f res v))
+        )
+    })
+    res
+}))

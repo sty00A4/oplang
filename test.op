@@ -1,3 +1,1 @@
-(set @cond true)
-(if cond #(set @cond false))
-(print cond)
+(print (reduce (array 1 2 3) +))
