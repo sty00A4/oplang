@@ -86,7 +86,7 @@ local function lex(path, text)
         col = col + 1
         if char() == "\n" then
             ln = ln + 1
-            col = 1
+            col = 0
         end
     end
     local function symbol(s)
