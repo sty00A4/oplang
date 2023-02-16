@@ -43,6 +43,10 @@
     )
 ))
 
+(global @div? (func @a @b
+    #(= (% a b) 0)
+))
+
 (global @number? (func @v
     #(= (type v) "number")
 ))
