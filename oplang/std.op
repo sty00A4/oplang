@@ -6,15 +6,27 @@
     #(do ((not :cond) :case :else))
 ))
 
-(global @set! (func-inline @:var @:f
-    #(set var (f var))
-))
-(global @inc (func-inline @:var
-    #(set var (+ var 1))
-))
-(global @dec (func-inline @:var
-    #(set var (- var 1))
-))
+(global @set! (func-inline @:var @:f #{
+    (if! (string? :var)
+        #(error (.. "bad argument #1 (expected string, got " (type :var) ")"))
+    )
+    (if! (func? :f)
+        #(error (.. "bad argument #2 (expected function, got " (type :f) ")"))
+    )
+    (set :var (:f (get :var)))
+}))
+(global @inc (func-inline @:var #{
+    (if! (string? :var)
+        #(error (.. "bad argument #1 (expected string, got " (type :var) ")"))
+    )
+    (set :var (+ (get :var) 1))
+}))
+(global @dec (func-inline @:var #{
+    (if! (string? :var)
+        #(error (.. "bad argument #1 (expected string, got " (type :var) ")"))
+    )
+    (set :var (- (get :var) 1))
+}))
 
 (global @not (func @v
     #((bool v) false true)

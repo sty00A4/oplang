@@ -85,25 +85,30 @@ local function Context()
                         end
                     end
                     self.scopes[#self.scopes]:set(id, value)
+                else
+                    return "no scope to set variable in"
                 end
-                return "no scope to set variable in"
             end,
             ---@param self Context
             ---@param id string
             ---@param const boolean|nil
             ---@param value any
+            ---@return string|nil
             create = function(self, id, value, const)
                 if #self.scopes > 0 then
                     for i = #self.scopes, 1, -1 do
                         if self.scopes[i]:isConst(id) then return "'"..id.."'".." is already defined as a constant" end
                     end
                     self.scopes[#self.scopes]:set(id, value, const)
+                else
+                    return "no scope to set variable in"
                 end
             end,
             ---@param self Context
             ---@param id string
             ---@param const boolean|nil
             ---@param value any
+            ---@return string|nil
             global = function(self, id, value, const)
                 if #self.scopes > 0 then
                     for i = #self.scopes, 1, -1 do
@@ -114,6 +119,8 @@ local function Context()
                         end
                     end
                     self.scopes[1]:set(id, value)
+                else
+                    return "no scope to set variable in"
                 end
             end,
             ---@param self Context
@@ -131,11 +138,14 @@ local function Context()
             end,
             ---@param self Context
             trace = function(self)
-                local s = "Trace back (first on top):\n"
-                for _, pos in ipairs(self.traceback) do
-                    s = s .. tostring(pos) .. "\n"
+                if #self.traceback > 0 then
+                    local s = "Trace back (first on top):\n"
+                    for _, pos in ipairs(self.traceback) do
+                        s = s .. tostring(pos) .. "\n"
+                    end
+                    return s
                 end
-                return s
+                return ""
             end
         },
         {
@@ -562,6 +572,12 @@ local function STDContext()
         return res, "return"
     end)
 
+    context:create("get", function(node, args, context)
+        if type(args[1]) == "string" then
+            return context:get(args[1])
+        end
+        return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
+    end)
     context:create("set", function(node, args, context)
         if type(args[1]) == "string" then
             local err = context:set(args[1], args[2]) if err then return nil, nil, err, node.pos end
