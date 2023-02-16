@@ -121,3 +121,17 @@
     )
     true
 }))
+
+(global @randint (func @start @stop #{
+    (if! (number? start)
+        #(error (.. "bad argument #1 (expected number, got " (type start) ")"))
+    )
+    (if (nil? stop) #{
+        (set @stop start)
+        (set @start 0)
+    })
+    (if! (number? stop)
+        #(error (.. "bad argument #2 (expected number, got " (type stop) ")"))
+    )
+    (+ (round (* (random) (- stop start))) start)
+}))

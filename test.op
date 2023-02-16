@@ -1,1 +1,1 @@
-(print (neg? (- 3)))
+(forn @_ 1 100 #(print (randint 0 100)))
