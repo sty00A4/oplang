@@ -134,7 +134,7 @@
     true
 }))
 
-(global @randint (func @start @stop #{
+(global @rand-int (func @start @stop #{
     (if! (number? start)
         #(error (.. "bad argument #1 (expected number, got " (type start) ")"))
     )
