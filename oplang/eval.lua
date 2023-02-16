@@ -359,9 +359,10 @@ local function STDContext()
             context:global(prefix, value, true)
         end
     end
+
     for _, prefix in ipairs({
         "assert", "bit32", "io", "coroutine", "debug", "getmetatable",
-        "string", "table", "math", "os", "next", "print", "pcall", "rawequal",
+        "string", "table", "os", "next", "print", "pcall", "rawequal",
         "rawset", "rawget", "setmetatable", "tonumber", "tostring", "unpack",
         "utf8", "xpcall",
         "colors", "commands", "disk", "fs", "gps", "help", "http", "keys",
@@ -371,6 +372,13 @@ local function STDContext()
     }) do
         link(_G[prefix], prefix)
     end
+
+    if math then
+        for prefix, v in pairs(math) do
+            link(v, prefix)
+        end
+    end
+
     local add = linkf(function(a, b)
         return a + b
     end)
@@ -419,6 +427,7 @@ local function STDContext()
     local newIndex = linkf(function(a, b, c)
         a[b] = c
     end)
+
     context:create("+", function (node, args, context)
         local sum
         for _, arg in pairs(args) do
@@ -484,6 +493,9 @@ local function STDContext()
         return sum, "return"
     end)
     context:create("^", function (node, args, context)
+        if #args == 1 then
+            return pow(node, { args[1], args[1] }, context)
+        end
         local sum
         for _, arg in pairs(args) do
             local err, epos

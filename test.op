@@ -1,3 +1,1 @@
-(set @a 1)
-(set! @a -)
-(print a)
+(print (abs (- 1)))
