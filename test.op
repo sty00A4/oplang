@@ -1,1 +1,1 @@
-(print (div? 10 2))
+(print (neg? (- 3)))

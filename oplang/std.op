@@ -46,6 +46,18 @@
 (global @div? (func @a @b
     #(= (% a b) 0)
 ))
+(global @even? (func @a
+    #(div? a 2)
+))
+(global @odd? (func @a
+    #(not (div? a 2))
+))
+(global @pos? (func @a
+    #(= a (abs a))
+))
+(global @neg? (func @a
+    #(not (pos? a))
+))
 
 (global @number? (func @v
     #(= (type v) "number")
@@ -64,6 +76,9 @@
 ))
 (global @nil? (func @v
     #(= (type v) "nil")
+))
+(global @some? (func @v
+    #(not (nil? v))
 ))
 
 (global @map (func @list @f #{
