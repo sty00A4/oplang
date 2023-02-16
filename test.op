@@ -1,3 +1,5 @@
 (set @a 1)
-(del @a)
-(print a)
+(set @b 2)
+(print a b)
+(swap! @a @b)
+(print a b)

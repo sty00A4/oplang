@@ -27,13 +27,13 @@
     (set :b temp)
     (del @temp)
 }))
-(global @inc (func-inline @:var #{
+(global @inc! (func-inline @:var #{
     (if! (string? :var)
         #(error (.. "bad argument #1 (expected string, got " (type :var) ")"))
     )
     (set :var (+ (get :var) 1))
 }))
-(global @dec (func-inline @:var #{
+(global @dec! (func-inline @:var #{
     (if! (string? :var)
         #(error (.. "bad argument #1 (expected string, got " (type :var) ")"))
     )
