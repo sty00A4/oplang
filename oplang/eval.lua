@@ -19,6 +19,14 @@ local function Scope()
             end,
             ---@param self Scope
             ---@param id string
+            del = function(self, id)
+                if not self.const[id] then
+                    self.vars[id] = nil
+                    for i, def in ipairs(self.defs) do if def == id then self.defs[i] = nil end end
+                end
+            end,
+            ---@param self Scope
+            ---@param id string
             get = function(self, id)
                 return self.vars[id]
             end,
@@ -87,6 +95,20 @@ local function Context()
                     self.scopes[#self.scopes]:set(id, value)
                 else
                     return "no scope to set variable in"
+                end
+            end,
+            del = function(self, id)
+                if #self.scopes > 0 then
+                    for i = #self.scopes, 1, -1 do
+                        if self.scopes[i]:exist(id) then
+                            if self.scopes[i]:isConst(id) then return "'"..id.."'".." is defined as a constant" end
+                            self.scopes[i]:del(id)
+                            return
+                        end
+                    end
+                    self.scopes[#self.scopes]:del(id)
+                else
+                    return "no scope to delete variable in"
                 end
             end,
             ---@param self Context
@@ -599,6 +621,13 @@ local function STDContext()
     context:create("set", function(node, args, context)
         if type(args[1]) == "string" then
             local err = context:set(args[1], args[2]) if err then return nil, nil, err, node.pos end
+            return
+        end
+        return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
+    end)
+    context:create("del", function(node, args, context)
+        if type(args[1]) == "string" then
+            local err = context:del(args[1]) if err then return nil, nil, err, node.pos end
             return
         end
         return nil, nil, "bad argument #1 (expected string, got "..type(args[1])..")", node.pos
