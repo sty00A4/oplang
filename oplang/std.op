@@ -1,9 +1,24 @@
 (global @OP_VERSION "a0.1")
 (global @if (func-inline @:cond @:case @:else
-    #(do ((bool :cond) :case :else))))
+    #(do ((bool :cond) :case :else))
+))
+(global @if! (func-inline @:cond @:case @:else
+    #(do ((not :cond) :case :else))
+))
+
+(global @set! (func-inline @:var @:f
+    #(set var (f var))
+))
+(global @inc (func-inline @:var
+    #(set var (+ var 1))
+))
+(global @dec (func-inline @:var
+    #(set var (- var 1))
+))
 
 (global @not (func @v
-    #((bool v) false true)))
+    #((bool v) false true)
+))
 (global @or (func @a @b
     #((bool a) true
       ((bool b) true false)
@@ -36,20 +51,20 @@
 ))
 
 (global @map (func @list @f #{
-    (if (not (table? list))
+    (if! (table? list)
         #(error (.. "bad argument #1 (expected table, got " (type list) ")"))
     )
-    (if (not (func? f))
+    (if! (func? f)
         #(error (.. "bad argument #2 (expected function, got " (type f) ")"))
     )
     (for @k @v list #(seti list k (f v)))
     list
 }))
 (global @reduce (func @f @list #{
-    (if (not (table? list))
+    (if! (table? list)
         #(error (.. "bad argument #1 (expected table, got " (type list) ")"))
     )
-    (if (not (func? f))
+    (if! (func? f)
         #(error (.. "bad argument #2 (expected function, got " (type f) ")"))
     )
     (set @res)
@@ -62,11 +77,11 @@
     res
 }))
 (global @check (func @f @list #{
-    (if (not (table? list))
-        #(error (.. "bad argument #1 (expected table, got " (type list) ")"))
+    (if! (func? f)
+        #(error (.. "bad argument #1 (expected function, got " (type f) ")"))
     )
-    (if (not (func? f))
-        #(error (.. "bad argument #2 (expected function, got " (type f) ")"))
+    (if! (table? list)
+        #(error (.. "bad argument #2 (expected table, got " (type list) ")"))
     )
     (forn @i 1 (- (len list) 1)
         #(if (not (f (list i) (list (+ i 1))))
