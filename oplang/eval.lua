@@ -372,14 +372,14 @@ local function STDContext()
     }) do
         link(_G[prefix], prefix)
     end
-    math.round = function(x)
-        if x - math.abs(x) >= 0.5 then
-            return math.ceil(x)
-        else
-            return math.floor(x)
-        end
-    end
     if math then
+        math.round = function(x)
+            if x - math.abs(x) >= 0.5 then
+                return math.ceil(x)
+            else
+                return math.floor(x)
+            end
+        end
         for prefix, v in pairs(math) do
             link(v, prefix)
         end
