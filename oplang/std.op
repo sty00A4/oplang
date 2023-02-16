@@ -1,4 +1,4 @@
-(global @OP_VERSION "a0.1")
+(global @OP_VERSION "a1.0")
 (global @if (func-inline @:cond @:case @:else
     #(do ((bool :cond) :case :else))
 ))
